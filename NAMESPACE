@@ -5,3 +5,6 @@ exportClasses("nlmect")
 
 S3method(print, ddct)
 S3method(print, nlmect)
+S3method(coef, nlmect)
+S3method(coefficients, nlmect)
+S3method(vcov, nlmect)
