@@ -1,9 +1,7 @@
-export(qpcr_nlme)
-export(qpcr_nlme_formula)
-export(logistic5)
-export(llogistic5)
+export(qpcr_nlme, qpcr_nlme_formula, logistic5, llogistic5, ddctcomp)
+
 exportClasses("ddct")
-exportClasses("ct")
+exportClasses("nlmect")
 
 S3method(print, ddct)
-S3method(print, ct)
+S3method(print, nlmect)

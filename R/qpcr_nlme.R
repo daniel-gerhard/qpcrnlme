@@ -1,4 +1,4 @@
-qpcr_nlme <- function(response, cycle, gene, control_gene=NULL, treatment, control_treatment=NULL, brep, well, data, cutoff, conf.level=0.95, adjusted=FALSE, ratio_ddct=TRUE, nGQ=5, verbose=TRUE){
+qpcr_nlme <- function(response, cycle, gene, treatment, brep, well, data, cutoff, nGQ=5, verbose=TRUE){
   require(drc)
   require(nlme)
   require(statmod)
@@ -16,15 +16,14 @@ qpcr_nlme <- function(response, cycle, gene, control_gene=NULL, treatment, contr
   if (!is.factor(data[,treatment])) stop(paste(treatment, "is not a factor!"))
   if (length(levels(data[,gene])) < 2) stop(paste(gene, "has less than 2 levels!"))
   if (length(levels(data[,treatment])) < 2) stop(paste(treatment, "has less than 2 levels!"))
-  if (!is.null(control_gene)) if (!(control_gene %in% levels(data[,gene]))) stop(paste(control_gene, "is not a level in", gene, "!"))
-  if (!is.null(control_treatment)) if (!(control_treatment %in% levels(data[,treatment]))) stop(paste(control_treatment, "is not a level in", treatment, "!"))
+ 
 
   # working dataset
   dat <- data.frame(response=data[,response], cycle=data[,cycle],gene=data[,gene],treatment=data[,treatment],brep=data[,brep],well=data[,well])
   ng <- length(levels(dat$gene))
   nt <- length(levels(dat$treatment))
   dat$gt <- as.factor(paste(dat$gene, dat$treatment, sep=":"))
-  if (ratio_ddct == TRUE) dsymb <- " / " else dsymb <- " - "
+  
   
   # starting values
   if (verbose) cat("Searching for starting values ... ")
@@ -110,49 +109,7 @@ qpcr_nlme <- function(response, cycle, gene, control_gene=NULL, treatment, contr
   ctest <- cbind("estimate"=est, "std.err"=std)
   rownames(ctest) <- levels(dat$gt)
   if (verbose) cat("done\n")
-  
-  ##### ddct comparisons
-  # define pairwise comparisons
-  # between treatments
-  if (verbose) cat("Calculating delta delta c(t) ... ")
-  if (is.null(control_treatment)){
-    tcombi <- combn(1:nt, 2)
-  } else {
-    wtr <- which(levels(dat$treatment) == control_treatment)
-    tcombi <- rbind(wtr, (1:nt)[-wtr])
-  }
-  # between genes
-  if (is.null(control_gene)){
-    gcombi <- combn(0:(ng-1), 2)
-  } else {
-    wge <- which(levels(dat$gene) == control_gene)
-    gcombi <- rbind(wge, (1:ng)[-wge])-1
-  }
 
-  # estimate
-  ddctest <- as.vector(apply(gcombi, 2, function(gc){
-    apply(tcombi, 2, function(tc){
-      if (ratio_ddct == TRUE){
-        (est[tc[1] + nt*gc[1]] /  est[tc[2] + nt*gc[1]]) / (est[tc[1] + nt*gc[2]] / est[tc[2] + nt*gc[2]])
-      } else {
-        (est[tc[1] + nt*gc[1]] -  est[tc[2] + nt*gc[1]]) - (est[tc[1] + nt*gc[2]] - est[tc[2] + nt*gc[2]])
-      }
-    })
-  }))
-
-  # variance estimate
-  forml <- apply(gcombi, 2, function(gc){
-    apply(tcombi, 2, function(tc){
-      as.formula(paste("~ ", "(", "x", tc[1] + nt*gc[1], dsymb, "x", tc[2] + nt*gc[1], ")", dsymb, "(", "x", tc[1] + nt*gc[2], dsymb, "x", tc[2] + nt*gc[2], ")", sep=""))
-    })
-  })[[1]]
-  syms <- paste("x", 1:length(est), sep = "")
-  for (i in 1:length(est)) assign(syms[i], est[i])
-  gec <- t(sapply(forml, function(form) as.numeric(attr(eval(deriv(form, syms)), "gradient"))))
-  vcc <- gec %*% vce %*% t(gec)
-  ddctstd <- sqrt(diag(vcc))
-  if (verbose) cat("done\n")
-  
   ## df  (using lme containment df for aggregated data)
   if (verbose) cat("Computing degrees of freedom  ... ")
   fms <-  drm(response ~ cycle, curveid=well, data=dat, fct=L.5(), separate=TRUE)
@@ -166,66 +123,19 @@ qpcr_nlme <- function(response, cycle, gene, control_gene=NULL, treatment, contr
   df <- anova(fmldf)$denDF[4]
   if (verbose) cat("done\n")
 
-  # ddct names
-  lt <- abbreviate(levels(dat$treatment),3)
-  lg <- abbreviate(levels(dat$gene),3)
-  nm <- apply(gcombi+1, 2, function(gc){
-    apply(tcombi, 2, function(tc){
-      paste(paste("(",paste(paste(lt[tc[1]], lg[gc[1]], sep=":"), paste(lt[tc[2]], lg[gc[1]], sep=":"), sep=dsymb), ")", sep=""), paste("(",paste(paste(lt[tc[1]], lg[gc[2]], sep=":"), paste(lt[tc[2]], lg[gc[2]], sep=":"), sep=dsymb), ")", sep=""), sep=dsymb)
-    })    
-  })
-  
-
-  # confidence intervals
-  if (verbose) cat("Estimating confidence limits  ... ")
-  if (adjusted == TRUE){
-    require(mvtnorm)
-    cr <- cov2cor(vcc)
-    quant <- qmvt(conf.level, tail="both.tails", df=df, corr=cr)$quantile
-  } else {
-    quant <- qt(0.5+0.5*conf.level, df=df)
-  }
-
-  ## p-values
-  if (ratio_ddct == TRUE) deltashift <- 1 else deltashift <- 0
-  tstat <- (ddctest-deltashift)/ddctstd
-  if (adjusted == TRUE){
-    require(mvtnorm)
-    cr <- cov2cor(vcc)
-    dim <- ncol(cr)
-    pfct <- function(q){
-      low <- rep(-abs(q), dim)
-      upp <- rep(abs(q), dim)
-      pmvt(lower = low, upper = upp, df = df, corr = cr)
-    }
-    pv <- numeric(length(tstat))
-    for (i in 1:length(tstat)) pv[i] <- 1 - pfct(tstat[i])
-  } else {
-    pv <- pmin(1, 2*pt(abs(tstat), df=df, lower.tail=FALSE)*2)
-  }
-  
-  ci <- cbind(ddctest, ddctstd, ddctest-quant*ddctstd, ddctest+quant*ddctstd, pv)
-  rownames(ci) <- nm
-  colnames(ci) <- c("estimate", "std.err", "lower", "upper","p-value")
-  if (verbose) cat("done\n")
   
   out <- list()
+  out$data <- dat
   out$nlme <- fm
   out$ct <- ctest
   out$vcov <- vce
-  out$vcovddct <- vcc
-  out$coefmat <- ci
   out$df <- df
   out$gradient <- attr(est, "gradient")
-  class(out) <- "ddct"
+  out$nt <- nt
+  out$ng <- ng
+  class(out) <- "nlmect"
   return(out)
 }
-
-
-print.ddct <- function(x, digits = 3, ...){
-  cat("\nc(t) estimates:\n")
-  print(x$ct, digits=digits)
-  cat("\ndelta delta c(t) estimates:\n")
-  printCoefmat(x$coefmat, digits=digits, P.values=TRUE, has.Pvalue=TRUE)
-}
+  
+ 
 

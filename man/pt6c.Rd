@@ -32,8 +32,8 @@ p <- 25 # number of time points for prediction
 # (computation time increases with increasing p)
 tt <- seq(0,8, length=p) # time range for prediction 
 forms <- sapply(2:p, function(i){
-   as.formula(paste("~ (x",i," / x",i+p,") / (x",1," / x",p+1,")", sep="")))
-}
+   as.formula(paste("~ (x",i," / x",i+p,") / (x",1," / x",p+1,")", sep=""))
+})
 
 ## estimation of marginal cycle thresholds c(t)
 # 1 degree polynomial
@@ -108,16 +108,6 @@ ggplot(adat, aes(x=time, y=est)) +
   xlab("Hours after resupply of phosphate to the nutrient solution") +
   ylab(expression(frac(c(t)[eEf]^(time==h) / c(t)[PT6]^(time==h), c(t)[eEf]^(time==0) / c(t)[PT6]^(time==0))))
 
-
-
-####################################################################
-####################################################################
-pt6c$Time <- as.factor(pt6c$Time)
-pt6result <- qpcr_nlme(response="Fluorescence", cycle="Cycle",
-gene="Target", control_gene="eEf", treatment="Time",
-control_treatment="0", brep="Content", well="Well", data=pt6c,
-cutoff=100, conf.level=0.95, adjusted=TRUE, ratio_ddct=TRUE,
-verbose=TRUE)
 }
 
 }

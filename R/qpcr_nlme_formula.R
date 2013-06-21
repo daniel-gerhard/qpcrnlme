@@ -111,18 +111,14 @@ qpcr_nlme_formula <- function(response, cycle, gene, trtformula, brep, well, dat
   rownames(ctest) <- paste(rep(unique(dat$gene), each=nrow(Xp)), rownames(Xp), sep = " | ")
   if (verbose) cat("done\n")
   
-  out <- list()
+  out <- list() 
+  out$data <- dat
   out$nlme <- fm
   out$ct <- ctest
   out$vcov <- vce
   out$gradient <- attr(est, "gradient")
-  class(out) <- "ct"
+  class(out) <- "nlmect"
   return(out)
 }
 
-
-print.ct <- function(x, digits = 3, ...){
-  cat("\nc(t) estimates:\n")
-  print(x$ct, digits=digits)
-}
 

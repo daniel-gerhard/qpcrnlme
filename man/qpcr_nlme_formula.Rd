@@ -6,7 +6,8 @@
   single treatment factor at multiple genes. Marginal c(t) values and
   corresponding delta delta c(t) values are calculated.}
 \usage{
-qpcr_nlme_formula(response, cycle, gene, trtformula, brep, well, data, newdata, cutoff, nGQ=5, verbose=TRUE)
+qpcr_nlme_formula(response, cycle, gene, trtformula, brep, well, data, newdata, 
+  cutoff, nGQ=5, verbose=TRUE)
 }
 \arguments{
   \item{response}{Name of a column in data, denoting a numeric response
@@ -36,10 +37,10 @@ qpcr_nlme_formula(response, cycle, gene, trtformula, brep, well, data, newdata, 
 
 \examples{
 \dontrun{
-
 data(pt6c)
-qpcr_nlme_formula(response="Fluorescence", cycle="Cycle", gene="Target", trtformula=~ poly(Time, 4, raw=TRUE), brep="Content", well="Well", data=pt6c, newdata=data.frame(Time=seq(1,8, length=5)), cutoff=100, nGQ=5, verbose=TRUE)
-
+qpcr_nlme_formula(response="Fluorescence", cycle="Cycle", gene="Target", 
+  trtformula=~ poly(Time, 4, raw=TRUE), brep="Content", well="Well", data=pt6c, 
+  newdata=data.frame(Time=seq(1,8, length=5)), cutoff=100, nGQ=5, verbose=TRUE)
 }
 }
 

@@ -31,7 +31,10 @@ ggplot(KOTWTcurves, aes(x=Cycle, y=Fluorescence, colour=Sample,
 group=Well)) + geom_line() + facet_wrap(~Target)
 
 \dontrun{
-qpcr_nlme(response="Fluorescence", cycle="Cycle", gene="Target", control_gene="EF", treatment="Sample", control_treatment=NULL, brep="Content", well="Well", data=KOTWTcurves, cutoff=100, conf.level=0.95, adjusted=TRUE, ratio_ddct=TRUE, verbose=TRUE)
+kotwt <- qpcr_nlme(response="Fluorescence", cycle="Cycle", gene="Target", treatment="Sample", 
+                   brep="Content", well="Well", data=KOTWTcurves, cutoff=100, verbose=TRUE)
+ddctcomp(kotwt, control_gene="EF", control_treatment=NULL, 
+         conf.level=0.95, adjusted=TRUE, ratio_ddct=TRUE)
 }
 
 }

@@ -97,7 +97,7 @@ Starting values are found automatically by estimating several nonlinear models f
 It is established practice to evaluate real-time PCR data by means of the threshold cycle summary measure instead of directly interpreting the parameters in $f$. The threshold cycle is defined as the cycle number where the mean fluorescence level reaches a certain cutoff intensity $t$. Determining the threshold is an inverse regression problem that in case of a nonlinear regression model for a single replicate has the solution $c(t) = f^{-1}(t)$. For a nonlinear mixed model, the threshold cycle is obtained by solving the equation $E(f(c, \boldsymbol{\beta}_{0ij} + \boldsymbol{u}_0)) = t$ in $c$ for some specific fixed-effects parameter configuration denoted $\boldsymbol{\beta}_{0ij}$. Solving the equation requires repeated evaluation of the integral by integrating out the random effects $\boldsymbol{u}_0$.
 The qpcrnlme package uses Gauss-Hermite quadrature to approximate these integrals with help of the package statmod.
 
-The result of a RT-PCR data analysis with the qpcrnlme function is mainly a vector with marginal $c(t)$ estimates and the corresponding variance-covariances. Based on these estimates, specific linear combinations of the $c(t)$ values can be constructed, like the $\Delta\Delta c(t)$ value.
+The result of a RT-PCR data analysis with the qpcrnlme function is mainly a vector with marginal $c(t)$ estimates and the corresponding variance-covariances. Based on these estimates, specific linear combinations of the $c(t)$ values can be constructed. $\Delta\Delta c(t)$ values to compare treatment levels and genes can be calculated by function ddctcomp. 
 For these derived parameters, hypotheses tests and confidence intervals are provided.
 
 
@@ -113,28 +113,34 @@ The model parameterization is defined by assigning the appropriate column names 
 Some optional arguments can be changed:
 \begin{itemize}
 \item With the cutoff argument a $c(t)$ cutoff $t$ can be specified. This value should lie within the range of the lower and upper asymptote. 
-\item The conf.level argument specifies a confidence level of a $\Delta\Delta c(t)$ confidence interval. 
-\item If the \verb ratio_ddct  argument has the value TRUE, ratios of $c(t)$ estimates are computed to define the $\Delta\Delta c(t)$, otherwise the difference of $c(t)$ values are calculated. 
-\item If adjusted is TRUE, the family-wise error rate is controlled for all teatment comparisons. A single-step procedure is used, similar to the implementation in package multcomp, to obtain adjusted p-values and simultaneous confidence intervals. If adjusted equals FALSE, the per comparison error rate is used, assigning a separate type-I-error rate to each comparison.
 \item The nGQ defines the number of nodes and weights for the Gauss-Hermite approximation.
 \end{itemize}
 
-
-<<comparisontocontrol, warning=FALSE>>=
+The marginal $c(t)$ estimates for each time group per gene are calculated by
+<<comparisonctest, warning=FALSE>>=
 pt6c$Timefactor <- as.factor(pt6c$Time)
-comp2control <- qpcr_nlme(response="Fluorescence", cycle="Cycle", gene="Target", control_gene="eEf", treatment="Timefactor", control_treatment="0", brep="Content", well="Well", data=pt6c, cutoff=100, conf.level=0.95, adjusted=TRUE, ratio_ddct=TRUE, nGQ=1, verbose=FALSE)
-print(comp2control)
+ctest <- qpcr_nlme(response="Fluorescence", cycle="Cycle", gene="Target", treatment="Timefactor", brep="Content", well="Well", data=pt6c, cutoff=100, nGQ=1, verbose=FALSE)
+print(ctest)
 @
 
+
+$\Delta\Delta c(t)$ comparisons to the control time (0 hours) can be performed by the function ddctcomp. Besides the definition of a control gene and control treatment levels, following arguments can be modified:
+\begin{itemize}
+\item The conf.level argument specifies a confidence level of a $\Delta\Delta c(t)$ confidence interval. 
+\item If the \verb ratio_ddct  argument has the value TRUE, ratios of $c(t)$ estimates are computed to define the $\Delta\Delta c(t)$, otherwise the difference of $c(t)$ values are calculated. 
+\item If adjusted is TRUE, the family-wise error rate is controlled for all teatment comparisons. A single-step procedure is used, similar to the implementation in package multcomp, to obtain adjusted p-values and simultaneous confidence intervals. If adjusted equals FALSE, the per comparison error rate is used, assigning a separate type-I-error rate to each comparison.
+\end{itemize}
+
+<<comparison3control, warning=FALSE>>=
+ddctcomp(ctest, control_treatment="0", control_gene="eEf", conf.level=0.95, ratio_ddct=TRUE, adjusted=TRUE)
+@
 
 \subsection{All Pairwise-Comparisons}
 
 If no control treatment or control gene can be specified, the control lables can be set to NULL. In this case, all pairwise-comparison of treatment and/or gene groups are performed. With only two genes there will be no difference for the genewise comparisons to the comparisons to a control.
 
 <<allpaircomparisons, warning=FALSE>>=
-pt6c$Timefactor <- as.factor(pt6c$Time)
-comp2control <- qpcr_nlme(response="Fluorescence", cycle="Cycle", gene="Target", control_gene=NULL, treatment="Timefactor", control_treatment=NULL, brep="Content", well="Well", data=pt6c, cutoff=100, conf.level=0.95, adjusted=TRUE, ratio_ddct=TRUE, nGQ=1, verbose=FALSE)
-print(comp2control)
+ddctcomp(ctest, control_treatment=NULL, control_gene=NULL, conf.level=0.95, ratio_ddct=TRUE, adjusted=TRUE)
 @
 
 
@@ -157,18 +163,13 @@ A ddct object contains all results of each modeling step. The content of this cl
 
 The output of the nonlinear mixed model is found in the nlme slot. Here, access to the estimated variance components, fixed- and random effects, fitted values, etc. is available. 
 <<ddctnlme>>=
-print(comp2control$nlme, correlation=FALSE)
+print(ctest$nlme, correlation=FALSE)
 @
 
 The marginal $c(t)$ estimates can be obtained from the slot ct, the corresponding variance-covariance matrix is available in the vcov slot.
 <<ddctctest>>=
-print(comp2control$ct)
-@
-
-The $\Delta\Delta c(t)$ estimates and their variances and covariances are found in the coefmat and vcovddct slots.
-<<ddcddctest>>=
-print(comp2control$coefmat)
-print(round(comp2control$vcovddct, 5))
+print(ctest$ct)
+print(ctest$vcov)
 @
 
 
