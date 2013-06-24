@@ -22,13 +22,34 @@
 
 \begin{document}
 
+\SweaveOpts{engine=R} \\
+%\VignetteIndexEntry{Using qpcrnlme} \\
+%\VignettePackage{qpcrnlme} \\
+
+
+
 \maketitle
 
-\section{Data Example}
+\section{Data Examples}
 
-To illustrate the usage of the package, throughout the vignette the dataset pt6c is used as an example. In this experiment rice ({\it Oryza sativa} L.) plants were starved five days for phosphate resulting in an upregulation of the phosphate transporter PT6 to increase the uptake of the limited nutrient. Resupply of phosphate decreased the expression of PT6 after 0, 2, 4, 6, and 8 hours (variable \texttt{Time}). At each time point the expression of PT6 and the reference gene eEf (variable \texttt{Target}) were observed for three biological replicates (variable \texttt{Content}), which are thought of as representatives of the underlying biological system. For each biological replicate and gene the fluorescence intensity (variable \texttt{Fluorescence}) was measured over 40 PCR cycles (variable \texttt{Cycle}) for three technical replicates (variable \texttt{Well}).
+\subsection{KOTWTcurves}
 
-<<loaddata, message=FALSE, fig.width=12, fig.height=6>>=
+For this experiment an insertion has been introduced into the genome of different rice lines. It is assumed that because of this insertion, the expression of the gene 10g30610 is changed. By using the quantitative RT-PCR methodology the changes in gene expression of the target gene is analysed between two different insertions and the wild type. \texttt{Content}: ID of biological replicates; \texttt{Target}: gene of interest and EF (elongation factor) gene of control; \texttt{Samples}: rice lines with an insertion (KO, T) and wild type (W)
+
+<<loaddataKOTWTcurves, message=FALSE, fig.width=12, fig.height=6>>=
+library(qpcrnlme)
+data(KOTWTcurves)
+str(KOTWTcurves)
+KOTWTcurves$Sample <- factor(KOTWTcurves$Sample, levels=c("W", "T", "KO"))
+ggplot(KOTWTcurves, aes(x=Cycle, y=Fluorescence, colour=Sample, group=Well)) +
+  geom_line()
+@
+
+\subsection{pt6c}
+
+In this experiment rice ({\it Oryza sativa} L.) plants were starved five days for phosphate resulting in an upregulation of the phosphate transporter PT6 to increase the uptake of the limited nutrient. Resupply of phosphate decreased the expression of PT6 after 0, 2, 4, 6, and 8 hours (variable \texttt{Time}). At each time point the expression of PT6 and the reference gene eEf (variable \texttt{Target}) were observed for three biological replicates (variable \texttt{Content}), which are thought of as representatives of the underlying biological system. For each biological replicate and gene the fluorescence intensity (variable \texttt{Fluorescence}) was measured over 40 PCR cycles (variable \texttt{Cycle}) for three technical replicates (variable \texttt{Well}).
+
+<<loaddatapt6c, message=FALSE, fig.width=12, fig.height=6>>=
 library(qpcrnlme)
 data(pt6c)
 str(pt6c)
@@ -106,7 +127,7 @@ For these derived parameters, hypotheses tests and confidence intervals are prov
 
 \subsection{Pairwise-Comparisons to a control}
 
-For a first evaluation, the hours of phosphate resupply are treated as a grouping variable, clustering the response by different factor levels and ignoring the distance between the different time points. The objective for this approach is to compare the expected values for each time group with the control time at 0 hours.
+For a first evaluation, the two different insertion treatment groups in the KOTWTcurves dataset are compared to the wildtype group (W). The sample variable is a factor for this example, hence the design matrices for the fixed effects are structured in a way that for each gene-treatment level combination a single $c(t)$ value is estimated. 
 
 The model parameterization is defined by assigning the appropriate column names of the data.frame to the corresponding variable input argument, that is, a fluorescence response, a vector with cycle numbers, identifiers of treatment and gene factors, and factors specifying the structure of biological and technical replicates. 
 
@@ -118,13 +139,12 @@ Some optional arguments can be changed:
 
 The marginal $c(t)$ estimates for each time group per gene are calculated by
 <<comparisonctest, warning=FALSE>>=
-pt6c$Timefactor <- as.factor(pt6c$Time)
-ctest <- qpcr_nlme(response="Fluorescence", cycle="Cycle", gene="Target", treatment="Timefactor", brep="Content", well="Well", data=pt6c, cutoff=100, nGQ=1, verbose=FALSE)
+ctest <- qpcr_nlme(response="Fluorescence", cycle="Cycle", gene="Target", treatment="Sample", brep="Content", well="Well", data=KOTWTcurves, cutoff=100, nGQ=1, verbose=FALSE)
 print(ctest)
 @
 
 
-$\Delta\Delta c(t)$ comparisons to the control time (0 hours) can be performed by the function ddctcomp. Besides the definition of a control gene and control treatment levels, following arguments can be modified:
+$\Delta\Delta c(t)$ comparisons to the control can be performed by the function ddctcomp. Besides the definition of a control gene and control treatment levels, following arguments can be modified:
 \begin{itemize}
 \item The conf.level argument specifies a confidence level of a $\Delta\Delta c(t)$ confidence interval. 
 \item If the \verb ratio_ddct  argument has the value TRUE, ratios of $c(t)$ estimates are computed to define the $\Delta\Delta c(t)$, otherwise the difference of $c(t)$ values are calculated. 
@@ -132,7 +152,7 @@ $\Delta\Delta c(t)$ comparisons to the control time (0 hours) can be performed b
 \end{itemize}
 
 <<comparison3control, warning=FALSE>>=
-ddctcomp(ctest, control_treatment="0", control_gene="eEf", conf.level=0.95, ratio_ddct=TRUE, adjusted=TRUE)
+ddctcomp(ctest, control_treatment="W", control_gene="EF", conf.level=0.95, ratio_ddct=TRUE, adjusted=TRUE)
 @
 
 \subsection{All Pairwise-Comparisons}
@@ -146,7 +166,9 @@ ddctcomp(ctest, control_treatment=NULL, control_gene=NULL, conf.level=0.95, rati
 
 \section{More general modeling options}
 
-If a more specific specification of the designmatrix of the fixed effects is needed, a formula interface to model the treatmenteffects per gene is available in the function \verb qpcr_nlme_formula . Until now this interface is only restricted to apply the same design matrices for each of the nonlinear model parameters.
+If a more specific specification of the designmatrix of the fixed effects is needed, a formula interface to model the treatment effects per gene is available in the function \verb qpcr_nlme_formula . Until now this interface is only restricted to apply the same design matrices for each of the nonlinear model parameters.
+
+The pt6c dataset is used to illustrate the function \verb qpcr_nlme_formula , which enables us to describe the change in differential expression over time by a regression model.
 
 As an example, a cubic polynomial function is used to describe the differential gene-expression in time separately for each gene and each nonlinear model parameter except the upper asymptote.
 

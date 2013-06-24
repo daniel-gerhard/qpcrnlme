@@ -35,7 +35,6 @@ qpcr_nlme(response, cycle, gene, treatment, brep, well, data,
 
 \examples{
 \dontrun{
-
 data(pt6c)
 pt6c$Time <- as.factor(pt6c$Time)
 pt6result <- qpcr_nlme(response="Fluorescence", cycle="Cycle", gene="Target", 
@@ -55,6 +54,7 @@ Kresult <- qpcr_nlme(response="Fluorescence", cycle="Cycle", gene="Target", trea
 data(QTTWTcurves)
 Qresult <- qpcr_nlme(response="Fluorescence", cycle="Cycle", gene="Target", treatment="Sample", brep="Content", well="Well", 
                      data=QTTWTcurves, cutoff=10, nGQ=5, verbose=TRUE)
+                     
 }
 }
 
