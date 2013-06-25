@@ -7,5 +7,6 @@ Author: Daniel Gerhard
 Maintainer: Daniel Gerhard <gerhard@biostat.uni-hannover.de>
 Description: nlme wrapper for RT-PCR data.
 Depends: nlme, drc, statmod, ggplot2, mvtnorm
+Suggests: multcomp
 VignetteBuilder: knitr
 License: GPL
