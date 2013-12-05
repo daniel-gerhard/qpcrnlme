@@ -1,3 +1,8 @@
+import(nlme, stats, ggplot2)
+importFrom("mvtnorm", pmvt, qmvt)
+importFrom("drc", drm, LL.5, L.5)
+importFrom("statmod", gauss.quad.prob)
+
 export(qpcr_nlme, qpcr_nlme_formula, logistic5, llogistic5, ddctcomp)
 
 exportClasses("ddct")

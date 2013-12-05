@@ -1,8 +1,4 @@
 qpcr_nlme <- function(response, cycle, gene, treatment, brep, well, data, cutoff, nGQ=5, verbose=TRUE){
-  require(drc)
-  require(nlme)
-  require(statmod)
-
   # function argument checks
   if (!("data.frame" %in% class(data))) stop("data is not of class data.frame")
   dnames <- names(data)
@@ -27,7 +23,7 @@ qpcr_nlme <- function(response, cycle, gene, treatment, brep, well, data, cutoff
   
   # starting values
   if (verbose) cat("Searching for starting values ... ")
-  dfm <- drm(response ~ cycle, curveid=gt, data=dat, fct=LL.5(), separate=TRUE)
+  dfm <- eval(parse(text="drm(response ~ cycle, curveid=gt, data=dat, fct=LL.5(), separate=TRUE)"))
   cf <- matrix(coefficients(dfm), ncol=5, byrow=TRUE)
   start <- c(as.vector(cf[,c(1,2,4,5)]), mean(cf[,3]))
   if (verbose) cat("done\n")

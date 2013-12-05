@@ -1,8 +1,4 @@
 qpcr_nlme_formula <- function(response, cycle, gene, trtformula, brep, well, data, newdata, cutoff, nGQ=5, verbose=TRUE){
-  require(drc)
-  require(nlme)
-  require(statmod)
-
   # function argument checks
   if (!("data.frame" %in% class(data))) stop("data is not of class data.frame")
   dnames <- names(data)

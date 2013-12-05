@@ -60,7 +60,6 @@ ddctcomp <- function(object, control_gene=NULL, control_treatment=NULL, conf.lev
   
   # confidence intervals
   if (adjusted == TRUE){
-    require(mvtnorm)
     cr <- cov2cor(vcc)
     quant <- qmvt(conf.level, tail="both.tails", df=df, corr=cr)$quantile
   } else {
@@ -71,7 +70,6 @@ ddctcomp <- function(object, control_gene=NULL, control_treatment=NULL, conf.lev
   if (ratio_ddct == TRUE) deltashift <- 1 else deltashift <- 0
   tstat <- (ddctest-deltashift)/ddctstd
   if (adjusted == TRUE){
-    require(mvtnorm)
     cr <- cov2cor(vcc)
     dim <- ncol(cr)
     pfct <- function(q){
