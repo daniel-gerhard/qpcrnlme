@@ -1,8 +1,8 @@
 Package: qpcrnlme
 Type: Package
 Title: Nonlinear mixed model analysis of RT-PCR data
-Version: 0.0-22
-Date: 2014-06-26
+Version: 0.0-21
+Date: 2013-12-05
 Author: Daniel Gerhard
 Maintainer: Daniel Gerhard <gerhard@biostat.uni-hannover.de>
 Description: nlme wrapper for RT-PCR data.

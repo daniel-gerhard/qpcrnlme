@@ -1,0 +1,18 @@
+
+citEntry(entry="Article",
+         title = "Estimating marginal properties of quantitative real-time PCR data using nonlinear mixed models",
+         author = personList(as.person("Daniel Gerhard"),
+                             as.person("Melanie Bremer"),
+                             as.person("Christian Ritz")),
+         journal      = "Biometrics",
+         year         = "2014",
+         volume       = "70",
+         number       = "1",  
+         pages        = "247--254",
+         
+         textVersion =
+         paste("Daniel Gerhard, Melanie Bremer, Christian Ritz (2014).", 
+               "Estimating marginal properties of quantitative real-time PCR data using nonlinear mixed models.",
+               "Biometrics 70(1), 247--254."),
+         header = "Please cite the qpcrnlme package by the following reference:"
+)
