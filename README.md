@@ -12,5 +12,5 @@ Gerhard, D., Bremer, M. & Ritz, C., 2014. Estimating marginal properties of quan
 The package can easily be installed, using the devtools package:
 ```
 library(devtools)
-install_github("daniel-gerhard/qpcrnlme", build_vignettes=FALSE)
+install_github("daniel-gerhard/qpcrnlme")
 ```
